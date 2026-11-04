@@ -63,12 +63,34 @@ public class GoalControllerTests
     }
 
     [Fact]
-    public async void GetForUser()
+    public async Task GetForUser()
     {
-        // Arrange
+        // Arrange: preparar los datos y el controlador
+        var goals = collections.GetGoals();
+        var users = collections.GetUsers();
+        var userId = users[0].Id!;
         
-        // Act
-        
-        // Assert
+        foreach (var goal in goals)
+        {
+            goal.UserId = userId;
+        }
+
+        IGoalsService goalsService = new FakeGoalsService(goals, goals[0]);
+        IUsersService usersService = new FakeUsersService(users, users[0]);
+        GoalController controller = new(goalsService, usersService);
+
+        // Act: consultar los objetivos del usuario
+        var result = await controller.GetForUser(userId);
+
+        // Assert: comprobar la respuesta
+        Assert.NotNull(result);
+        Assert.NotEmpty(result!);
+        Assert.Equal(goals.Count, result!.Count);
+
+        Assert.All(result!, goal =>
+        {
+            Assert.IsAssignableFrom<Goal>(goal);
+            Assert.Equal(userId, goal.UserId);
+        });
     }
 }
